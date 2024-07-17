@@ -3,33 +3,283 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sumeru</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>simuleth - Validator Penalty Calculator</title>
+    <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet">
+    <link href="https://unpkg.com/nes.css@latest/css/nes.min.css" rel="stylesheet" />
+    <style>
+        body {
+            padding: 0 2rem;
+            margin: 0;
+            font-family: 'Press Start 2P', cursive;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding-top: 80px;
+        }
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 9;
+            background-color: white;
+            padding: 0.5rem 2rem;
+            box-shadow: 0 2px 0 rgba(0,0,0,0.2);
+        }
+        header h1 {
+            font-size: 1.2rem;
+            margin: 0;
+        }
+        footer {
+            margin-top: 2rem;
+            text-align: center;
+            padding: 1rem 0;
+            font-size: 0.8rem;
+        }
+        .content-wrapper {
+            display: flex;
+            justify-content: space-between;
+        }
+        .input-section {
+            width: 48%;
+        }
+        .result-section {
+            width: 48%;
+        }
+        .nes-field {
+            margin-bottom: 1.5rem;
+        }
+        .nes-container {
+            margin-bottom: 1rem;
+        }
+        .nes-container .title {
+            font-size: 1.1rem;
+        }
+        .nes-field label {
+            font-size: 0.8rem;
+        }
+        .nes-input {
+            font-size: 0.9rem;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .result-container {
+            font-size: 0.8rem;
+        }
+        .scenario-description {
+            font-size: 0.7rem;
+            margin-bottom: 1rem;
+        }
+        .tab-buttons {
+            display: flex;
+            margin-bottom: 1rem;
+        }
+        .tab-button {
+            flex: 1;
+            text-align: center;
+            padding: 0.5rem;
+            cursor: pointer;
+            border: 1px solid #000;
+            background-color: #d3d3d3;
+        }
+        .tab-button.active {
+            background-color: #fff;
+            border-bottom: none;
+        }
+        .toggle-switch {
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+        .client-selection {
+            margin-bottom: 1rem;
+        }
+        .correlation-options {
+            display: none;
+        }
+    </style>
 </head>
 <body>
     <header>
-        <h1>Sumeru</h1>
-        <button id="connectWallet">Connect Wallet</button>
+        <h1>simuleth</h1>
     </header>
-    <main>
-        <section id="mapSection">
-            <h2>Map</h2>
-            <div id="map">
-                <!-- Map placeholder -->
-                <img src="https://via.placeholder.com/400x300?text=Map+of+Australia" alt="Map of Australia">
+
+    <div class="container">
+        <h2 class="title" style="font-size: 1rem; margin-bottom: 1rem;">Calculate possible penalties, slashings and estimate lost income for different scenarios for an Ethereum validator</h2>
+
+        <div class="nes-container with-title">
+            <p class="title">Common Information</p>
+            <div class="nes-field">
+                <label for="validator_balance">Validator Balance (in ETH):</label>
+                <input type="number" step="0.000000001" id="validator_balance" class="nes-input" required>
             </div>
-        </section>
-        <section id="contentSection">
-            <div id="sortContainer">
-                <label for="sortBy">Sort by:</label>
-                <select id="sortBy">
-                    <option value="date">Date</option>
-                    <option value="trending">Trending</option>
+            <div class="client-selection">
+                <label for="execution_client">Execution Client:</label>
+                <select id="execution_client" class="nes-select">
+                    <option value="geth">Geth (55%)</option>
+                    <option value="nethermind">Nethermind (28%)</option>
+                    <option value="besu">Besu (14%)</option>
+                    <option value="erigon">Erigon (3%)</option>
                 </select>
             </div>
-            <div id="cardContainer"></div>
-        </section>
-    </main>
-    <script src="script.js"></script>
+            <div class="client-selection">
+                <label for="consensus_client">Consensus Client:</label>
+                <select id="consensus_client" class="nes-select">
+                    <option value="nimbus">Nimbus (11%)</option>
+                    <option value="lighthouse">Lighthouse (30%)</option>
+                    <option value="prysm">Prysm (38%)</option>
+                    <option value="teku">Teku (19.63%)</option>
+                    <option value="lodestar">Lodestar (1%)</option>
+                </select>
+            </div>
+            <p>Total active validators in the network: 1,027,576</p>
+        </div>
+
+        <div class="content-wrapper">
+            <div class="input-section">
+                <div class="tab-buttons">
+                    <div class="tab-button active" onclick="openTab(event, 'OfflineTab')">Node goes offline</div>
+                    <div class="tab-button" onclick="openTab(event, 'DoubleSigningTab')">Double Signing</div>
+                </div>
+
+                <div id="OfflineTab" class="tab-content active nes-container">
+                    <p class="scenario-description">Node offline due to lost power or internet connection</p>
+                    <form id="offlineForm" method="POST">
+                        <input type="hidden" name="penalty_type" value="Node goes offline">
+                        <div class="nes-field">
+                            <label for="offline_hours">Offline Duration (in hours):</label>
+                            <input type="number" step="0.1" name="offline_hours" id="offline_hours" class="nes-input" required>
+                        </div>
+                        <button type="submit" class="nes-btn is-primary">Calculate Penalty</button>
+                    </form>
+                </div>
+
+                <div id="DoubleSigningTab" class="tab-content nes-container">
+                    <p class="scenario-description">Double signing can occur if a redundant validator or an old backup node with same keys accidentally signs two different blocks in the same slot</p>
+                    <form id="doubleSigningForm" method="POST">
+                        <input type="hidden" name="penalty_type" value="Double Signing - by redundant validator">
+                        <div class="nes-field">
+                            <label>
+                                <input type="checkbox" id="correlatedPenaltyToggle" class="nes-checkbox">
+                                <span>Include Correlated Slashing Penalty</span>
+                            </label>
+                        </div>
+                        <div id="correlationOptions" style="display: none;">
+                            <div class="nes-field">
+                                <label for="correlationCause">Cause of Correlation:</label>
+                                <div class="nes-select">
+                                    <select id="correlationCause" name="correlationCause">
+                                        <option value="" disabled selected>Select cause</option>
+                                        <option value="execution">Bug in Execution Client</option>
+                                        <option value="consensus">Bug in Consensus Client</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="nes-btn is-primary">Calculate Penalty</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="result-section">
+                <div id="OfflineResult" class="result-container nes-container with-title">
+                    <p class="title">Results for Node Offline</p>
+                    <p>Calculation results will appear here.</p>
+                </div>
+                <div id="DoubleSigningResult" class="result-container nes-container with-title" style="display:none;">
+                    <p class="title">Results for Double Signing</p>
+                    <p>Calculation results will appear here.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2023 simuleth. All rights reserved.</p>
+    </footer>
+
+    <script>
+        function openTab(evt, tabName) {
+            var i, tabContent, tabButtons;
+            tabContent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabContent.length; i++) {
+                tabContent[i].classList.remove("active");
+            }
+            tabButtons = document.getElementsByClassName("tab-button");
+            for (i = 0; i < tabButtons.length; i++) {
+                tabButtons[i].classList.remove("active");
+            }
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+
+            // Show/hide corresponding result container
+            document.getElementById("OfflineResult").style.display = tabName === "OfflineTab" ? "block" : "none";
+            document.getElementById("DoubleSigningResult").style.display = tabName === "DoubleSigningTab" ? "block" : "none";
+        }
+
+        document.getElementById('correlatedPenaltyToggle').addEventListener('change', function() {
+            const correlationOptions = document.getElementById('correlationOptions');
+            correlationOptions.style.display = this.checked ? 'block' : 'none';
+            document.getElementById('correlationCause').required = this.checked;
+        });
+
+        function submitForm(formId) {
+            const form = document.getElementById(formId);
+            const formData = new FormData(form);
+
+            // Get the validator balance from the common section
+            const validatorBalance = document.getElementById('validator_balance').value;
+            if (!validatorBalance) {
+                alert('Please enter the Validator Balance.');
+                return;
+            }
+            formData.append('balance', validatorBalance);
+
+            formData.append('execution_client', document.getElementById('execution_client').value);
+            formData.append('consensus_client', document.getElementById('consensus_client').value);
+
+            if (formId === 'doubleSigningForm') {
+                const includeCorrelatedPenalty = document.getElementById('correlatedPenaltyToggle').checked;
+                formData.append('include_correlated_penalty', includeCorrelatedPenalty);
+                if (includeCorrelatedPenalty) {
+                    const correlationCause = document.getElementById('correlationCause').value;
+                    if (correlationCause) {
+                        formData.append('correlation_cause', correlationCause);
+                    } else {
+                        alert('Please select a cause of correlation.');
+                        return;
+                    }
+                }
+            }
+
+            fetch('/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => {
+                const resultContainerId = formId === 'offlineForm' ? 'OfflineResult' : 'DoubleSigningResult';
+                document.getElementById(resultContainerId).innerHTML = data;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while submitting the form.');
+            });
+        }
+
+        document.getElementById('offlineForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitForm('offlineForm');
+        });
+
+        document.getElementById('doubleSigningForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitForm('doubleSigningForm');
+        });
+    </script>
 </body>
 </html>
