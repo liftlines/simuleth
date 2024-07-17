@@ -1,0 +1,27 @@
+<p class="title">Results for Double Signing</p>
+{% if error %}
+    <p class="nes-text is-error">{{ error }}</p>
+{% else %}
+    <div class="lists">
+        <ul class="nes-list is-disc">
+            <li>
+                <span>Base Slashing Penalty:</span>
+                <span class="nes-text is-primary">{{ "%.5f"|format(base_slashing_penalty_eth) }} ETH</span>
+            </li>
+            {% if include_correlated_penalty %}
+            <li>
+                <span>Additional Correlated Penalty:</span>
+                <span class="nes-text is-error">{{ "%.5f"|format(additional_correlated_penalty_eth) }} ETH</span>
+            </li>
+            {% endif %}
+            <li>
+                <span>Long-term Penalty (over ~36 days):</span>
+                <span class="nes-text is-warning">{{ "%.5f"|format(long_term_penalty_eth) }} ETH</span>
+            </li>
+            <li>
+                <span>Total Penalty:</span>
+                <span class="nes-text is-error">{{ "%.5f"|format(total_penalty_eth) }} ETH</span>
+            </li>
+        </ul>
+    </div>
+{% endif %}
