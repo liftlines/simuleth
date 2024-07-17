@@ -1,0 +1,32 @@
+<p class="title">Results</p>
+{% if error %}
+    <p class="nes-text is-error">{{ error }}</p>
+{% else %}
+    {% if penalty_type == 'Node goes offline' %}
+        <div class="lists">
+            <ul class="nes-list is-disc">
+                <li>
+                    <span>Inactivity Penalty:</span>
+                    <span class="nes-text is-primary">{{ "%.5f"|format(inactivity_penalty_eth) }} ETH</span>
+                </li>
+                <li>
+                    <span>Estimated Lost Income:</span>
+                    <span class="nes-text is-error">{{ "%.5f"|format(missed_rewards_eth) }} ETH</span>
+                </li>
+            </ul>
+        </div>
+    {% elif penalty_type == 'Double Signing - by redundant validator' %}
+        <div class="lists">
+            <ul class="nes-list is-disc">
+                <li>
+                    <span>Slashing Penalty:</span>
+                    <span class="nes-text is-primary">{{ "%.5f"|format(slashing_penalty_eth) }} ETH</span>
+                </li>
+                <li>
+                    <span>Whistleblower Reward:</span>
+                    <span class="nes-text is-success">{{ "%.5f"|format(whistleblower_reward_eth) }} ETH</span>
+                </li>
+            </ul>
+        </div>
+    {% endif %}
+{% endif %}
